@@ -1,3 +1,5 @@
+[← back](README.md)
+
 # create-single-spa
 
 https://single-spa.js.org/docs/create-single-spa/ → utility da linea di comando per generare un boilerplate da cui partire, per chi preferisce configurazioni autogenerate e gestite per webpack, babel, jest, ecc.
