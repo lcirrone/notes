@@ -78,7 +78,7 @@ procedimento da ripetere per ogni micro applicazione, quindi scegliendo ogni vol
     ```
 ## Demo
 
-Clonare i branch *single-spa* delle seguenti repository:
+Seguire i passaggi indicati in precedenza o clonare i branch *single-spa* delle seguenti repository:
 - [DEMO-BeijeMicrosite-Container](https://github.com/BeijePeopleFirst/DEMO-BeijeMicrosite-Container)
 - [DEMO-BeijeMicrosite-FooterSite](https://github.com/BeijePeopleFirst/DEMO-BeijeMicrosite-FooterSite)
 - [DEMO-BeijeMicrosite-HeaderSite](https://github.com/BeijePeopleFirst/DEMO-BeijeMicrosite-HeaderSite)
