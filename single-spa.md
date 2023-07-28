@@ -76,3 +76,16 @@ procedimento da ripetere per ogni micro applicazione, quindi scegliendo ogni vol
       apiKey: "devKey",
     };
     ```
+## Demo
+
+Clonare i branch *single-spa* delle seguenti repository:
+- [DEMO-BeijeMicrosite-Container](https://github.com/BeijePeopleFirst/DEMO-BeijeMicrosite-Container)
+- [DEMO-BeijeMicrosite-FooterSite](https://github.com/BeijePeopleFirst/DEMO-BeijeMicrosite-FooterSite)
+- [DEMO-BeijeMicrosite-HeaderSite](https://github.com/BeijePeopleFirst/DEMO-BeijeMicrosite-HeaderSite)
+- [DEMO-BeijeMicrosite-BodySite](https://github.com/BeijePeopleFirst/DEMO-BeijeMicrosite-BodySite)
+
+Far partire i singoli progetti, *container* per ultimo:
+- footer (Vue) -> `yarn serve:standalone` -> http://localhost:8081/
+- header (Angular) -> `npm run serve:single-spa:header-site` -> http://localhost:4200/ (pagina bianca, ma funziona, vedi sopra)
+- body (React) -> `yarn start:standalone` -> http://localhost:8080/
+- container (React) -> `cd shell & yarn start` -> http://localhost:9000/
