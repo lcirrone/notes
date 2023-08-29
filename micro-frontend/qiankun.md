@@ -14,7 +14,7 @@
     "@babel/plugin-proposal-private-property-in-object": "^7.21.0"
   }
   ```
-- installare la dipendenza Qiankun, necessaria solo nel progetto container -> `npm i qiankun -S`
+- installare la dipendenza Qiankun, necessaria solo nel progetto container → `npm i qiankun -S`
 - rimuovere App.js, App.css, App.test.js e index.css
 
 ## Creazione progetto "body" (React)
@@ -74,7 +74,7 @@
     __webpack_public_path__ = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__;
   }
   ```
-  e importarlo all'interno di index.js -> `import "./public-path";`
+  e importarlo all'interno di index.js → `import "./public-path";`
   
   **N.B.** la riga `// eslint-disable-next-line` è necessaria per evitare l'errore `__webpack_public_path__ is not defined`
 
@@ -89,6 +89,7 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
     webpack: (config) => {
       config.output.library = `${name}-[name]`;
       config.output.libraryTarget = "umd";
+      // config.output.jsonpFunction = `webpackJsonp_${name}`;, → deprecated in Webpack 5
       config.output.chunkLoadingGlobal = `jsonp_${name}`;
       config.output.globalObject = "window";
   
@@ -108,7 +109,6 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
     },
   };
   ```
-  **N.B.** la riga `config.output.chunkLoadingGlobal = `jsonp_${name}`;` era in precedenza `config.output.jsonpFunction = `webpackJsonp_${name}`;`, ma con WebPack 5 va aggiornata
 - modificare gli script di start, build e test del package.json sostituendo a "react-scripts" "react-app-rewired":
   ``` json
   "scripts": {
@@ -135,21 +135,21 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
     //   entry: '//localhost:4200',
     //   container: '#root',
     //   activeRule: '/header',
-    //   props: { Routerbase: "/body" },
+    //   props: { Routerbase: "/header" },
     // },
     {
-      name: "body", // app name registered should match name in package.json of microapp1
-      entry: "//localhost:3001", // where our microapp1 exists
+      name: "body", // app name registered should match name in package.json of micro app 1
+      entry: "//localhost:3001", // where our micro app 1 exists
       container: "#root", // div which exists in main app with id root, so inside this div our micro app will render
-      activeRule: "/body", // our microapp will be visible in main app under this path
+      activeRule: "/body", // our micro app will be visible in main app under this path
       props: { Routerbase: "/body" }, // used by qiankun for routing purpose
     },
     // {
     //   name: "footer",
-    //   entry: "//localhost:8081",
+    //   entry: "//localhost:8080",
     //   container: "#root",
     //   activeRule: "/footer",
-    //   props: { Routerbase: "/body" },
+    //   props: { Routerbase: "/footer" },
     // },
   ]);
   setDefaultMountApp("/body"); // optional
@@ -159,4 +159,110 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
   // start qiankun
   start();
   ```
-- aaa
+
+## Creazione progetto "footer" (Vue)
+- installare Vue CLI (deprecato!) se non ancora presente nel sistema → `npm install -g @vue/cli`
+- creare una micro app Vue con il comando `vue create footer` scegliendo come configurazione "Default ([Vue 3] babel, eslint)"
+- creare il file public-path.js all'interno della cartella "src":
+  ``` js
+  if (window.__POWERED_BY_QIANKUN__) {
+    // eslint-disable-next-line
+    __webpack_public_path__ = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__;
+  }
+  ```
+  
+  **N.B.** come nel caso di React, la riga `// eslint-disable-next-line` è necessaria per evitare l'errore `__webpack_public_path__ is not defined`
+- installare "vue-router" → `npm i vue-router -S`
+- importare il file "public-path.js" ed esportare i tre metodi dei cicli di vita (bootstrap, mount e unmount) dal proprio file entry principale, nel caso di Vue main.js:
+  ``` js
+  import "./public-path";
+  import { createApp } from "vue";
+  import { createRouter, createWebHistory } from "vue-router";
+  import App from "./App.vue";
+  import routes from "./router";
+  // import store from "./store";
+
+  let router = null;
+  let instance = null;
+  let history = null;
+
+  function render(props = {}) {
+    const { container } = props;
+    history = createWebHistory(window.__POWERED_BY_QIANKUN__ ? "/footer" : "/");
+    router = createRouter({
+      history,
+      routes,
+    });
+
+    instance = createApp(App);
+    instance.use(router);
+    // instance.use(store);
+    instance.mount(container ? container.querySelector("#app") : "#app");
+  }
+
+  // when run independently
+  if (!window.__POWERED_BY_QIANKUN__) {
+    render();
+  }
+
+  export async function bootstrap() {
+    console.log("%c%s", "color: green;", "vue3.0 app bootstraped");
+  }
+  export async function mount(props) {
+    render(props);
+  }
+  export async function unmount() {
+    instance.unmount();
+    instance._container.innerHTML = "";
+    instance = null;
+    router = null;
+    history.destroy();
+  }
+  ```
+  **N.B.** il codice fornito nella guida ufficiale non è aggiornato, basarsi sull'esempio in Vue della [repository](https://github.com/umijs/qiankun/blob/master/examples/vue3/src/main.js) 
+- file router.js:
+  ``` js
+  const routes = [
+  { path: '/', component: () => import(/* webpackChunkName: "HelloWorld" */ '@/components/HelloWorld'), props: {currentSection: "microsites"} },
+  //   { path: '/microsites', component: footerSite, props: {currentSection: "microsites"} },
+  //   { path: '/ai', component: footerSite, props: {currentSection: "ai"} },
+  //   { path: '/ar', component: footerSite, props: {currentSection: "ar"} },
+  //   { path: '/nft-blockchain', component: footerSite, props: {currentSection: "nft-blockchain"} },
+  //   { path: '/cloud-aws', component: footerSite, props: {currentSection: "cloud-aws"} },
+  ]
+
+  export default routes;
+  ```
+- modificare la configurazione di Webpack presente nel file vue.config.js:
+  ``` js
+  const { name } = require("./package");
+  module.exports = {
+    devServer: {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+    },
+    configureWebpack: {
+      output: {
+        library: `${name}-[name]`,
+        libraryTarget: "umd", // bundle the micro app into umd library format
+        // jsonpFunction: `webpackJsonp_${name}`, → deprecated in Webpack 5
+        chunkLoadingGlobal: `jsonp_${name}`,
+      },
+    },
+  };
+  ```
+- decommento la registrazione della micro app nell'index.js dell'app container:
+  ``` js
+  {
+    name: "footer",
+    entry: "//localhost:8080",
+    container: "#root",
+    activeRule: "/footer",
+    props: { Routerbase: "/footer" },
+  }
+  ```
+
+## Server
+- http://localhost:3001/ → body in React, se raggiunto così da pagina bianca, ma se si va su http://localhost:3000/body è renderizzato correttamente
+- http://localhost:8080/ oppure http://localhost:3000/footer/ → footer in Vue
