@@ -1,4 +1,4 @@
-[← back](module-federation.md) | [home](README.md)
+[← back](module-federation.md) | [home](..\README.md)
 
 # ModuleFederationPlugin, procedimento standard
 

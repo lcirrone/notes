@@ -1,4 +1,4 @@
-[← back](README.md)
+[← back](..\README.md)
 
 # [YouTube Playlist from the Core Team](https://www.youtube.com/playlist?list=PLLUD8RtHvsAOhtHnyGx57EYXoaNsxGrTU)
 
