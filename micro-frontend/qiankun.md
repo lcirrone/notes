@@ -407,3 +407,62 @@ Nello specifico:
 - http://localhost:3001/ → body in React, se raggiunto così da pagina bianca, ma se si va su http://localhost:3000/body è renderizzato correttamente
 - http://localhost:8080/ oppure http://localhost:3000/footer/ → footer in Vue
 - http://localhost:4200/ oppure http://localhost:3000/header/ → header in Angular
+
+## Renderizzazione contemporanea di più micro app
+Allo stato attuale, le micro app vengono renderizzate una alla volta e a ciascuna è assegnata una rotta. Per far sì che possano essere mostrate tutte nella stessa rotta, bisogna modificare tre file.
+
+### `header/src/app/app-routing.module.ts`
+``` diff
+@NgModule({
+-  providers: [{ provide: APP_BASE_HREF, useValue: window.__POWERED_BY_QIANKUN__ ? '/header' : '/' }]
++  providers: [{ provide: APP_BASE_HREF, useValue: '/' }]
+})
+```
+
+### `container/public/index.html`
+``` diff
+- <div id="root"></div>
++ <div id="header"></div>
++ <div id="body"></div>
++ <div id="footer"></div>
+```
+
+### `container/public/index.js`
+``` diff
+- import { registerMicroApps, start, setDefaultMountApp } from "qiankun";
++ import { registerMicroApps, start } from "qiankun";
+
+  registerMicroApps([
+    {
+      name: "header",
+      entry: "//localhost:4200",
+-     container: "#root",
++     container: "#header",
+-     activeRule: "/header",
++     activeRule: () => true,
+-     props: { Routerbase: "/header" },
+    },
+    {
+      name: "body",
+      entry: "//localhost:3001",
+-     container: "#root",
++     container: "#body",
+-     activeRule: "/body",
++     activeRule: () => true,
+-     props: { Routerbase: "/body" },
+    },
+    {
+      name: "footer",
+      entry: "//localhost:8080",
+-     container: "#root",
++     container: "#footer",
+-     activeRule: "/footer",
++     activeRule: () => true,
+-     props: { Routerbase: "/footer" },
+    },
+  ]);
+- setDefaultMountApp("/body"); // optional
+
+- start();
++ start({ singular: false });
+```
