@@ -26,7 +26,7 @@
     "...": "..."
   }
   ```
-- ogni micro app deve esportare i tre hook/metodi dei cicli di vita (bootstrap, mount e unmount) dal proprio file entry principale, nel caso di React index.js:
+- ogni micro app deve esportare i tre hook/metodi dei cicli di vita (bootstrap, mount e unmount) dal proprio file entry principale, nel caso di React src/index.js:
   ``` jsx
   import "./public-path";
   import React from "react";
@@ -78,7 +78,7 @@
   
   **N.B.** la riga `// eslint-disable-next-line` è necessaria per evitare l'errore `__webpack_public_path__ is not defined`
 
-### Configurazione Webpack
+## Configurazione Webpack
 Dato che l'applicazione container e le micro app girano su porte diverse, bisogna sovrascrivere la configurazione del dev server perché i browser non permettono l'accesso da una porta all'altra. Per farlo si può utilizzare "react-app-rewired" o "@rescripts/cli".
 - `npm i react-app-rewired -S`
 - nella root creare un file config-overrides.js con la seguente configurazione:
@@ -131,10 +131,10 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
 
   registerMicroApps([
     // {
-    //   name: 'header',
-    //   entry: '//localhost:4200',
-    //   container: '#root',
-    //   activeRule: '/header',
+    //   name: "header",
+    //   entry: "//localhost:4200",
+    //   container: "#root",
+    //   activeRule: "/header",
     //   props: { Routerbase: "/header" },
     // },
     {
@@ -173,7 +173,7 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
   
   **N.B.** come nel caso di React, la riga `// eslint-disable-next-line` è necessaria per evitare l'errore `__webpack_public_path__ is not defined`
 - installare "vue-router" → `npm i vue-router -S`
-- importare il file "public-path.js" ed esportare i tre metodi dei cicli di vita (bootstrap, mount e unmount) dal proprio file entry principale, nel caso di Vue main.js:
+- importare il file "public-path.js" ed esportare i tre metodi dei cicli di vita (bootstrap, mount e unmount) dal proprio file entry principale, nel caso di Vue src/main.js:
   ``` js
   import "./public-path";
   import { createApp } from "vue";
@@ -252,7 +252,7 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
     },
   };
   ```
-- decommento la registrazione della micro app nell'index.js dell'app container:
+- decommentare la registrazione della micro app nell'index.js dell'app container:
   ``` js
   {
     name: "footer",
@@ -263,6 +263,147 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
   }
   ```
 
+## Creazione progetto "header" (Angular)
+- creare una micro app Angular con il comando `npx ng new header` che utilizzi il routing e che usi CSS come formato per i fogli di stile
+- creare il file public-path.js all'interno della cartella "src":
+  ``` js
+  if (window.__POWERED_BY_QIANKUN__) {
+    __webpack_public_path__ = window.__INJECTED_PUBLIC_PATH_BY_QIANKUN__;
+  }
+  ```
+- settare il path base per la modalità di routing *history* modificando il file src/app/app-routing.module.ts:
+  ``` ts
+  import { APP_BASE_HREF } from '@angular/common';
+  import { NgModule } from '@angular/core';
+  import { RouterModule, Routes } from '@angular/router';
+
+  const routes: Routes = [];
+
+  @NgModule({
+    imports: [RouterModule.forRoot(routes)],
+    exports: [RouterModule],
+    // @ts-ignore
+    providers: [{ provide: APP_BASE_HREF, useValue: window.__POWERED_BY_QIANKUN__ ? '/header' : '/' }]
+  })
+  export class AppRoutingModule { }
+  ```
+- importare il file "public-path.js" ed esportare i tre metodi dei cicli di vita (bootstrap, mount e unmount) dal proprio file entry principale, nel caso di Angular src/main.ts:
+  ``` ts
+  import './public-path';
+  import { /* enableProdMode, */ NgModuleRef } from '@angular/core';
+  import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+  import { AppModule } from './app/app.module';
+  // import { environment } from './environments/environment';
+
+  // if (environment.production) {
+  //   enableProdMode();
+  // }
+
+  let app: void | NgModuleRef<AppModule>;
+  async function render() {
+    app = await platformBrowserDynamic()
+      .bootstrapModule(AppModule)
+      .catch((err) => console.error(err));
+  }
+  if (!(window as any).__POWERED_BY_QIANKUN__) {
+    render();
+  }
+
+  export async function bootstrap(props: Object) {
+    console.log(props);
+  }
+
+  export async function mount(props: Object) {
+    render();
+  }
+
+  export async function unmount(props: Object) {
+    console.log(props);
+    // @ts-ignore
+    app.destroy();
+  }
+  ```
+- installare il plugin per configurare Webpack → `npm i @angular-builders/custom-webpack -D`
+- creare un file custom-webpack.config.js nella root:
+  ``` js
+  const appName = require("./package.json").name;
+  module.exports = {
+    devServer: {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+      },
+    },
+    output: {
+      library: `${appName}-[name]`,
+      libraryTarget: "umd",
+      // jsonpFunction: `webpackJsonp_${appName}`, → deprecated in Webpack 5
+      chunkLoadingGlobal: `jsonp_${appName}`,
+    },
+  };
+  ```
+- modificare il file angular.json cambiando i valori di `[packageName] > architect > build > builder` e `[packageName] > architect > serve > builder` in modo che utilizzino i plugin appena installati e aggiungere il nostro file di configurazione Webpack all'interno di `[packageName] > architect > build > options`.
+  ```diff
+    "build": {
+  -   "builder": "@angular-devkit/build-angular:browser",
+  +   "builder": "@angular-builders/custom-webpack:browser",
+      "options": {
+  +     "customWebpackConfig": {
+  +     "path": "./custom-webpack.config.js"
+  +     }
+      }
+    },
+    "serve": {
+  -   "builder": "@angular-devkit/build-angular:dev-server",
+  +   "builder": "@angular-builders/custom-webpack:dev-server",
+    }
+  ```
+- decommentare la registrazione della micro app nell'index.js dell'app container:
+  ``` js
+  {
+    name: "header",
+    entry: "//localhost:4200",
+    container: "#root",
+    activeRule: "/header",
+    props: { Routerbase: "/header" },
+  }
+  ```
+
+### Problema *zone.js* 
+Nel caso la rotta che renderizza la micro app in Angular avesse dei problemi ("la pagina non risponde"), eliminare *zone.js* e spostarlo nell'app container.
+Nello specifico:
+- nel progetto Angular, eliminare *zone.js* dai polyfill dell'angular.json, all'interno di `[ packageName] > architect > build > options` e `[ packageName] > architect > test > options`:
+  ``` diff
+    "build": {
+      "options": {
+  -     "polyfills": [
+  -       "zone.js"
+  -     ]
+      }
+    },
+    "test": {
+      "options": {
+  -     "polyfills": [
+  -       "zone.js",
+  -       "zone.js/testing"
+  -     ]
+      }
+    }
+  ```
+- nel progetto Angular, eliminare *zone.js* dalle dipendenze del package.json:
+  ```diff
+  - "zone.js": "~0.13.0"
+  ```
+- nel progetto Angular, aggiungere *zone.js* all'interno del tag `<head>` del file src/index.html, affinché venga utilizzato quando si accede alla micro app in maniera indipendente:
+  ```diff
+  + <!-- Other CDN/local packages can also be used -->
+  + <script src="https://unpkg.com/zone.js" ignore></script>
+  ```
+- nel progetto container, installare *zone.js* → `npm i zone.js -S`
+  ```diff
+  + "zone.js": "^0.13.1"
+  ```
+
 ## Server
 - http://localhost:3001/ → body in React, se raggiunto così da pagina bianca, ma se si va su http://localhost:3000/body è renderizzato correttamente
 - http://localhost:8080/ oppure http://localhost:3000/footer/ → footer in Vue
+- http://localhost:4200/ oppure http://localhost:3000/header/ → header in Angular
