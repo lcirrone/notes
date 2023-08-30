@@ -367,6 +367,17 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
     props: { Routerbase: "/header" },
   }
   ```
+- per prevenire il conflitto di `<app-root></app-root>` quando anche l'app container o altre micro app sono in Angular, è consigliato aggiungere un id unico ad `<app-root>`:
+  - src/index.html
+    ``` diff
+    - <app-root></app-root>
+    + <app-root id="header"></app-root>
+    ```
+  - src/app/app.component.ts
+    ``` diff
+    - selector: 'app-root',
+    + selector: '#header app-root',
+    ```
 
 ### Problema *zone.js* 
 Nel caso la rotta che renderizza la micro app in Angular avesse dei problemi ("la pagina non risponde"), eliminare *zone.js* e spostarlo nell'app container.
