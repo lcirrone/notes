@@ -420,7 +420,7 @@ Nello specifico:
 - http://localhost:4200/ oppure http://localhost:3000/header/ → header in Angular
 
 ## Renderizzazione contemporanea di più micro app
-Allo stato attuale, le micro app vengono renderizzate una alla volta e a ciascuna è assegnata una rotta. Per far sì che possano essere mostrate tutte nella stessa rotta, bisogna modificare tre file.
+Allo stato attuale, le micro app vengono renderizzate una alla volta e a ciascuna è assegnata una rotta. Per far sì che possano essere mostrate tutte nella stessa rotta, bisogna modificare quattro file.
 
 ### `header/src/app/app-routing.module.ts`
 ``` diff
@@ -428,6 +428,15 @@ Allo stato attuale, le micro app vengono renderizzate una alla volta e a ciascun
 -  providers: [{ provide: APP_BASE_HREF, useValue: window.__POWERED_BY_QIANKUN__ ? '/header' : '/' }]
 +  providers: [{ provide: APP_BASE_HREF, useValue: '/' }]
 })
+```
+
+### `footer/src/main.js`
+``` diff
+function render(props = {}) {
+  history = createWebHistory("/");
+-   history = createWebHistory(window.__POWERED_BY_QIANKUN__ ? "/footer" : "/");
++   history = createWebHistory("/");
+}
 ```
 
 ### `container/public/index.html`
