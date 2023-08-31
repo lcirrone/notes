@@ -6,19 +6,14 @@
 - https://medium.com/@fibonalabsdigital/how-to-implement-micro-frontends-using-qiankun-9f308eddc5f4
 - https://qiankun.umijs.org/guide/tutorial
 
-## Creazione progetto "container" (React)
-- `npx create-react-app container`
+## Creazione progetto "body" (React)
+- `npx create-react-app body`
 - aggiungere al package.json la dipendenza dev "@babel/plugin-proposal-private-property-in-object" per evitare il warning
   ``` json
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.0"
-  }
+  },
   ```
-- installare la dipendenza Qiankun, necessaria solo nel progetto container → `npm i qiankun -S`
-- rimuovere App.js, App.css, App.test.js e index.css
-
-## Creazione progetto "body" (React)
-- `npx create-react-app body`
 - modificare lo script "start" all'interno del package.json perché l'app usi una porta diversa da quella di default (la 3000, già usata dal progetto container)
   ``` json
   "scripts": {
@@ -79,7 +74,7 @@
   **N.B.** la riga `// eslint-disable-next-line` è necessaria per evitare l'errore `__webpack_public_path__ is not defined`
 
 ## Configurazione Webpack
-Dato che l'applicazione container e le micro app girano su porte diverse, bisogna sovrascrivere la configurazione del dev server perché i browser non permettono l'accesso da una porta all'altra. Per farlo si può utilizzare "react-app-rewired" o "@rescripts/cli".
+Dato che l'applicazione container e le micro app girano su porte diverse, bisogna sovrascrivere la configurazione del dev server perché i browser non permettono l'accesso da una porta all'altra. Per farlo si possono utilizzare librerie come "react-app-rewired" o "@rescripts/cli".
 - `npm i react-app-rewired -S`
 - nella root creare un file config-overrides.js con la seguente configurazione:
   ``` js
@@ -124,19 +119,20 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
   PORT=3001
   ```
 
-## Configurazione applicazione principale
-- modificare l'index.js dell'applicazione container nel seguente modo:
+## Creazione progetto "container" (React)
+- `npx create-react-app container`
+- aggiungere al package.json la dipendenza dev "@babel/plugin-proposal-private-property-in-object" per evitare il warning
+  ``` json
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.0"
+  },
+  ```
+- installare la dipendenza Qiankun, necessaria solo nel progetto container → `npm i qiankun -S`
+- modificare l'index.js nel seguente modo:
   ``` js
   import { registerMicroApps, start, setDefaultMountApp } from "qiankun";
 
   registerMicroApps([
-    // {
-    //   name: "header",
-    //   entry: "//localhost:4200",
-    //   container: "#root",
-    //   activeRule: "/header",
-    //   props: { Routerbase: "/header" },
-    // },
     {
       name: "body", // app name registered should match name in package.json of micro app 1
       entry: "//localhost:3001", // where our micro app 1 exists
@@ -144,13 +140,6 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
       activeRule: "/body", // our micro app will be visible in main app under this path
       props: { Routerbase: "/body" }, // used by qiankun for routing purpose
     },
-    // {
-    //   name: "footer",
-    //   entry: "//localhost:8080",
-    //   container: "#root",
-    //   activeRule: "/footer",
-    //   props: { Routerbase: "/footer" },
-    // },
   ]);
   setDefaultMountApp("/body"); // optional
   // by default, if you want to display a micro app you can use this
@@ -159,6 +148,7 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
   // start qiankun
   start();
   ```
+- rimuovere i file inutilizzati: App.js, App.css, App.test.js e index.css
 
 ## Creazione progetto "footer" (Vue)
 - installare Vue CLI (deprecato!) se non ancora presente nel sistema → `npm install -g @vue/cli`
@@ -252,15 +242,18 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
     },
   };
   ```
-- decommentare la registrazione della micro app nell'index.js dell'app container:
+- registrare la micro app nell'index.js dell'app container:
   ``` js
-  {
-    name: "footer",
-    entry: "//localhost:8080",
-    container: "#root",
-    activeRule: "/footer",
-    props: { Routerbase: "/footer" },
-  }
+  registerMicroApps([
+    // ... other routes
+    {
+      name: "footer",
+      entry: "//localhost:8080",
+      container: "#root",
+      activeRule: "/footer",
+      props: { Routerbase: "/footer" },
+    }
+  ]);
   ```
 
 ## Creazione progetto "header" (Angular)
@@ -357,15 +350,18 @@ Dato che l'applicazione container e le micro app girano su porte diverse, bisogn
   +   "builder": "@angular-builders/custom-webpack:dev-server",
     }
   ```
-- decommentare la registrazione della micro app nell'index.js dell'app container:
+- registrare la micro app nell'index.js dell'app container:
   ``` js
-  {
-    name: "header",
-    entry: "//localhost:4200",
-    container: "#root",
-    activeRule: "/header",
-    props: { Routerbase: "/header" },
-  }
+  registerMicroApps([
+    // ... other routes
+    {
+      name: "header",
+      entry: "//localhost:4200",
+      container: "#root",
+      activeRule: "/header",
+      props: { Routerbase: "/header" },
+    }
+  ]);
   ```
 - per prevenire il conflitto di `<app-root></app-root>` quando anche l'app container o altre micro app sono in Angular, è consigliato aggiungere un id unico ad `<app-root>`:
   - src/index.html
@@ -415,7 +411,7 @@ Nello specifico:
   ```
 
 ## Server
-- http://localhost:3001/ → body in React, se raggiunto così da pagina bianca, ma se si va su http://localhost:3000/body è renderizzato correttamente
+- http://localhost:3001/ → body in React, se raggiunto così dà pagina bianca, ma su http://localhost:3000/body è renderizzato correttamente
 - http://localhost:8080/ oppure http://localhost:3000/footer/ → footer in Vue
 - http://localhost:4200/ oppure http://localhost:3000/header/ → header in Angular
 
